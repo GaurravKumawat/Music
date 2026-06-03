@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Music // Custom Player</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" class="apple-icon"><path fill="currentColor" d="M18.71,19.5C17.88,20.74,17,21.95,15.66,21.97C14.32,22,13.89,21.18,12.37,21.18C10.84,21.18,10.37,21.95,9.1,22C7.79,22.05,6.8,20.68,5.96,19.47C4.25,17,2.94,12.45,4.7,9.39C5.57,7.87,7.13,6.91,8.82,6.88C10.1,6.86,11.32,7.75,12.11,7.75C12.89,7.75,14.37,6.68,15.92,6.84C16.57,6.87,18.39,7.1,19.56,8.82C19.47,8.88,17.39,10.1,17.41,12.63C17.44,15.65,20.06,16.66,20.1,16.67C20.08,16.74,19.67,18.11,18.71,19.5M15.97,4.17C16.63,3.37,17.07,2.28,16.95,1C16,1.04,14.9,1.6,14.24,2.38C13.68,3.04,13.19,4.14,13.34,5.39C14.39,5.47,15.4,4.88,15.97,4.17Z"/></svg>
+                <span>Music</span>
+            </div>
+            <nav>
+                <div class="nav-item active" id="nav-search">
+                    <span class="icon">🍎</span> Listen Now
+                </div>
+                <div class="nav-item" id="nav-playlist">
+                    <span class="icon">🎵</span> Playlists (<span id="playlist-count">0</span>)
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header-bar">
+                <div class="search-box">
+                    <span class="search-glass-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Artists, Songs, Lyrics, more...">
+                    <button id="search-btn">Search</button>
+                </div>
+            </header>
+
+            <section id="search-view" class="view-panel">
+                <h1 class="view-title">Listen Now</h1>
+                <h2 class="section-subtitle">Top Picks Based on Your History</h2>
+                
+                <div class="track-list" id="results-list">
+                    <p class="empty-state">Search for your favorite track above to build your session.</p>
+                </div>
+            </section>
+
+            <section id="playlist-view" class="view-panel hidden">
+                <h1 class="view-title">Library</h1>
+                <h2 class="section-subtitle">Your Custom Tracks Collection</h2>
+                
+                <div class="track-list" id="playlist-list">
+                    <p class="empty-state">No music inside this playlist container yet.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="player-bar">
+            <div class="now-playing-info">
+                <img src="https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=100&q=80" alt="Cover" class="mini-art" id="mini-cover">
+                <div class="track-meta">
+                    <div class="track-title" id="current-title">Not Playing</div>
+                    <div class="track-status" id="current-status">Ready</div>
+                </div>
+            </div>
+
+            <div class="center-controls">
+                <div class="player-controls">
+                    <button class="control-btn" id="prev-btn">⏮</button>
+                    <button class="control-btn play-main" id="play-btn">▶</button>
+                    <button class="control-btn" id="next-btn">⏭</button>
+                </div>
+
+                <div class="progress-container">
+                    <span class="time-stamp" id="current-time">0:00</span>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                            <div class="progress-slider" id="progress-slider"></div>
+                        </div>
+                    </div>
+                    <span class="time-stamp" id="total-time">0:00</span>
+                </div>
+            </div>
+
+            <div class="right-actions">
+                <button class="action-toggle-visual" id="toggle-immersive-view" title="Toggle Immersive Full Player">Fullscreen Canvas ⤢</button>
+            </div>
+
+            <div class="video-containment">
+                <div id="yt-core-player"></div>
+            </div>
+        </footer>
+
+        <div class="immersive-modal hidden" id="immersive-modal">
+            <button class="close-modal" id="close-modal">✕</button>
+            <div class="modal-bg-blur" id="modal-blur-bg"></div>
+            
+            <div class="modal-content-wrapper">
+                <div class="large-artwork-card">
+                    <img src="" alt="Artwork" id="large-cover">
+                </div>
+                
+                <div class="immersive-meta">
+                    <h1 id="immersive-title">No Track Selected</h1>
+                    <p id="immersive-artist">Choose a track to view design</p>
+                </div>
+
+                <div class="immersive-progress-block">
+                    <div class="progress-container">
+                        <span class="time-stamp" id="imm-current-time">0:00</span>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar" id="imm-progress-bar">
+                                <div class="progress-fill" id="imm-progress-fill"></div>
+                            </div>
+                        </div>
+                        <span class="time-stamp" id="imm-total-time">0:00</span>
+                    </div>
+                </div>
+
+                <div class="immersive-controls-row">
+                    <button class="imm-btn" id="imm-prev-btn">⏮</button>
+                    <button class="imm-btn imm-play" id="imm-play-btn">▶</button>
+                    <button class="imm-btn" id="imm-next-btn">⏭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,530 @@
+:root {
+    --apple-dark-bg: #000000;
+    --apple-surface: #1c1c1e;
+    --apple-element: #2c2c2e;
+    --apple-accent: #ff2d55; /* Official Apple Music Neon Red / Crimson Accent */
+    --apple-accent-translucent: rgba(255, 45, 85, 0.2);
+    --text-main: #ffffff;
+    --text-muted: #8e8e93;
+    --glass-bg: rgba(28, 28, 30, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --radius-apple-card: 12px;
+    --radius-round: 8px;
+    --apple-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    --transition-spring: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+body {
+    background-color: var(--apple-dark-bg);
+    color: var(--text-main);
+    font-family: var(--apple-font);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Base View Matrix Layout */
+.app-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 1fr 100px;
+    height: 100vh;
+    position: relative;
+}
+
+/* Sidebar Branding & Links */
+.sidebar {
+    background-color: #161617;
+    padding: 34px 24px;
+    border-right: 1px solid var(--glass-border);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 35px;
+    letter-spacing: -0.5px;
+}
+
+.apple-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--apple-accent);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-round);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #e5e5ea;
+    transition: var(--transition-spring);
+    margin-bottom: 4px;
+}
+
+.nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.active {
+    background-color: var(--apple-accent);
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* Main Display Panels container */
+.main-content {
+    background-color: var(--apple-dark-bg);
+    padding: 30px 48px;
+    overflow-y: auto;
+    padding-bottom: 140px;
+}
+
+.header-bar {
+    margin-bottom: 32px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background-color: var(--apple-surface);
+    border: 1px solid var(--glass-border);
+    padding: 4px 6px 4px 16px;
+    border-radius: 10px;
+    max-width: 540px;
+    transition: var(--transition-spring);
+}
+
+.search-box:focus-within {
+    border-color: var(--apple-accent);
+    box-shadow: 0 0 0 3px rgba(255, 45, 85, 0.25);
+}
+
+.search-glass-icon {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-right: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    outline: none;
+    font-family: var(--apple-font);
+}
+
+.search-box button {
+    background-color: var(--apple-accent);
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 10px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition-spring);
+}
+
+.search-box button:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.view-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 0 0 6px 0;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin: 0 0 24px 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Track Card Rows (Emulating Apple Music Listen Now Layout) */
+.track-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+}
+
+.track-row {
+    background-color: var(--apple-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-apple-card);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: var(--transition-spring);
+    position: relative;
+}
+
+.track-row:hover {
+    transform: translateY(-4px);
+    background-color: var(--apple-element);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.track-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.track-meta {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.track-meta .title {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-main);
+}
+
+.track-meta .channel {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Action button configurations inside standard row lists */
+.row-actions-group {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.action-btn {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: var(--radius-round);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: var(--transition-spring);
+}
+
+.action-btn:hover {
+    background-color: var(--apple-accent);
+}
+
+.action-btn.delete:hover {
+    background-color: #ff3b30;
+}
+
+/* Bottom Player Deck Bar (Mini-Mode) */
+.player-bar {
+    grid-column: 1 / -1;
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 90;
+}
+
+.now-playing-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 25%;
+}
+
+.mini-art {
+    width: 56px;
+    height: 56px;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.center-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 45%;
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.control-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: var(--transition-spring);
+}
+
+.control-btn:hover {
+    color: var(--apple-accent);
+    transform: scale(1.1);
+}
+
+.control-btn.play-main {
+    font-size: 1.6rem;
+}
+
+/* Premium Continuous Progress Slider Tracks */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.time-stamp {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 32px;
+    font-variant-numeric: tabular-nums;
+}
+
+.progress-bar-wrapper {
+    flex: 1;
+    padding: 6px 0;
+    cursor: pointer;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--text-main);
+    border-radius: 2px;
+    width: 0%;
+}
+
+.progress-slider {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--text-main);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    left: 0%;
+    transition: transform 0.15s ease;
+}
+
+.progress-bar-wrapper:hover .progress-slider {
+    transform: translateY(-50%) scale(1);
+}
+
+.progress-bar-wrapper:hover .progress-fill {
+    background: var(--apple-accent);
+}
+
+.action-toggle-visual {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius-round);
+    cursor: pointer;
+    transition: var(--transition-spring);
+}
+
+.action-toggle-visual:hover {
+    background-color: var(--text-main);
+    color: var(--apple-dark-bg);
+}
+
+/* Immersive Canvas Overlay Modal View (Shared Image Reference 1) */
+.immersive-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: zoomIn 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.modal-bg-blur {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(80px) brightness(0.45) saturate(140%);
+    transform: scale(1.2);
+    z-index: -1;
+    background-color: var(--apple-dark-bg);
+    transition: background-image 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.close-modal {
+    position: absolute;
+    top: 32px;
+    right: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: var(--transition-spring);
+}
+
+.close-modal:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+.modal-content-wrapper {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.large-artwork-card {
+    width: 320px;
+    height: 320px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    margin-bottom: 40px;
+    transition: var(--transition-spring);
+}
+
+.large-artwork-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.immersive-meta h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.immersive-meta p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 35px 0;
+}
+
+.immersive-progress-block {
+    width: 100%;
+    margin-bottom: 35px;
+}
+
+.immersive-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.imm-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: var(--transition-spring);
+}
+
+.imm-btn:hover {
+    transform: scale(1.15);
+}
+
+.imm-btn.imm-play {
+    font-size: 2.6rem;
+}
+
+/* Base Systems hidden items */
+.video-containment {
+    position: absolute;
+    bottom: -50px;
+    right: 0;
+    opacity: 0.0001;
+}
+
+/* Navigation Animation Keyframes */
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.96); filter: blur(10px); }
+    to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* Responsive Adaptive Viewports for Tablet & Mobile Layout alignment */
+@media(max-width: 868px) {
+    .app-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr 100px;
+    }
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+    }
+    .logo { margin-bottom: 0; }
+    nav { display: flex; gap: 8px; }
+    .main-content { padding: 24px; }
+    .track-list { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
