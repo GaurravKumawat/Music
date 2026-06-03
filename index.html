@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music // Custom Player</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">Music</div>
+            <nav>
+                <div class="nav-item active" id="nav-search">🔍 Discover</div>
+                <div class="nav-item" id="nav-playlist">🎵 Your Playlist (<span id="playlist-count">0</span>)</div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="search-section">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Search tracks, artists, or genres...">
+                    <button id="search-btn">Search</button>
+                </div>
+                <p class="quota-saving-note">✨ Smart Caching Active: Repeated searches won't use your API credits.</p>
+            </section>
+
+            <section id="search-view" class="view-panel">
+                <h2>Search Results</h2>
+                <div class="track-list" id="results-list">
+                    <p class="empty-state">Search for something above to start streaming.</p>
+                </div>
+            </section>
+
+            <section id="playlist-view" class="view-panel hidden">
+                <h2>Your Playlist</h2>
+                <div class="track-list" id="playlist-list">
+                    <p class="empty-state">Your playlist is currently empty. Add tracks from the search tab!</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="player-bar">
+            <div class="now-playing-info">
+                <div class="track-title" id="current-title">No Track Selected</div>
+                <div class="track-status" id="current-status">Ready</div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                        <div class="progress-slider" id="progress-slider"></div>
+                    </div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00</span>
+                    <span>/</span>
+                    <span id="total-time">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-controls">
+                <button class="control-btn" id="prev-btn" title="Previous">⏮</button>
+                <button class="control-btn play-main" id="play-btn" title="Play/Pause">▶</button>
+                <button class="control-btn" id="next-btn" title="Next">⏭</button>
+            </div>
+
+            <div class="video-containment">
+                <div id="yt-core-player"></div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="app.js"></script>
+</body>
+</html>
