@@ -1,9 +1,309 @@
-const API_KEY = 'AIzaSyCMUD8WFt0dCKhiTcH8FM_x4V0ksO6g-iY'; 
+const API_KEY = 'AIzaSyCMUD8WFt0dCKhiTcH8FM_x4V0ksO6g-iY';
 let player;
 let currentPlaylist = [];
 let currentIndex = 0;
-let isSearching = false; 
-let isSeeking = false; 
+let isSearching = false;
+let isSeeking = false;
+let pendingTrack = null;
+let trendingTracks = [];
+
+// Playlist Management System
+function getPlaylists() {
+    const stored = localStorage.getItem('user_playlists');
+    return stored ? JSON.parse(stored) : [];
+}
+
+function savePlaylists(playlists) {
+    localStorage.setItem('user_playlists', JSON.stringify(playlists));
+    updatePlaylistCount();
+}
+
+function createPlaylist(name) {
+    const playlists = getPlaylists();
+    const newPlaylist = {
+        id: Date.now().toString(),
+        name: name,
+        songs: []
+    };
+    playlists.push(newPlaylist);
+    savePlaylists(playlists);
+    return newPlaylist;
+}
+
+function addSongToPlaylist(playlistId, song) {
+    const playlists = getPlaylists();
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (playlist && !playlist.songs.some(s => s.id === song.id)) {
+        playlist.songs.push(song);
+        savePlaylists(playlists);
+        return true;
+    }
+    return false;
+}
+
+function updatePlaylistCount() {
+    const playlists = getPlaylists();
+    const totalSongs = playlists.reduce((sum, p) => sum + p.songs.length, 0);
+    document.getElementById('playlist-count').textContent = totalSongs;
+}
+
+function displayPlaylists() {
+    const playlists = getPlaylists();
+    const playlistView = document.getElementById('playlist-list');
+    playlistView.innerHTML = '';
+    
+    if (playlists.length === 0) {
+        playlistView.innerHTML = '<p class="empty-state">No playlists yet. Create one from search!</p>';
+        return;
+    }
+
+    playlists.forEach(playlist => {
+        const playlistSection = document.createElement('div');
+        playlistSection.className = 'playlist-section';
+        playlistSection.innerHTML = `
+            <div class="playlist-section-header">
+                <h3>${playlist.name}</h3>
+                <span class="playlist-song-count">${playlist.songs.length} songs</span>
+            </div>
+        `;
+        
+        if (playlist.songs.length === 0) {
+            playlistSection.innerHTML += '<p class="empty-playlist">No songs added yet</p>';
+        } else {
+            const songsList = document.createElement('div');
+            songsList.className = 'playlist-songs';
+            playlist.songs.forEach((song) => {
+                const songItem = document.createElement('div');
+                songItem.className = 'playlist-song-item';
+                songItem.innerHTML = `
+                    <img src="${song.thumbnail}" class="song-thumb" alt="cover" onclick="playPlaylistTrack('${playlist.id}', '${song.id}', event)" style="cursor:pointer;">
+                    <div class="song-info" onclick="playPlaylistTrack('${playlist.id}', '${song.id}', event)">
+                        <div class="song-title">${song.title}</div>
+                        <div class="song-artist">${song.channel}</div>
+                    </div>
+                    <button class="remove-song-btn" onclick="removeSongFromPlaylist('${playlist.id}', '${song.id}')">✕</button>
+                `;
+                songsList.appendChild(songItem);
+            });
+            playlistSection.appendChild(songsList);
+        }
+        
+        playlistView.appendChild(playlistSection);
+    });
+}
+
+function removeSongFromPlaylist(playlistId, songId) {
+    const playlists = getPlaylists();
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (playlist) {
+        playlist.songs = playlist.songs.filter(s => s.id !== songId);
+        savePlaylists(playlists);
+        displayPlaylists();
+    }
+}
+
+function playPlaylistTrack(playlistId, songId, event) {
+    if (event) event.stopPropagation();
+    const playlists = getPlaylists();
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (playlist && playlist.songs.length > 0) {
+        currentPlaylist = [...playlist.songs];
+        const index = currentPlaylist.findIndex(s => s.id === songId);
+        if (index !== -1) {
+            playTrack(index);
+        }
+    }
+}
+
+function showPlaylistModal(track) {
+    pendingTrack = track;
+    const modal = document.getElementById('playlist-modal');
+    const existingPlaylistsContainer = document.getElementById('existing-playlists');
+    const playlists = getPlaylists();
+    
+    existingPlaylistsContainer.innerHTML = '';
+    
+    if (playlists.length > 0) {
+        playlists.forEach(playlist => {
+            const item = document.createElement('div');
+            item.className = 'playlist-item';
+            item.textContent = `${playlist.name} (${playlist.songs.length})`;
+            item.onclick = () => {
+                addSongToPlaylist(playlist.id, track);
+                closePlaylistModal();
+                showNotification(`Added to "${playlist.name}"`);
+            };
+            existingPlaylistsContainer.appendChild(item);
+        });
+    } else {
+        existingPlaylistsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 10px;">No playlists yet. Create one below!</p>';
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closePlaylistModal() {
+    document.getElementById('playlist-modal').classList.add('hidden');
+    document.getElementById('new-playlist-input').value = '';
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--apple-accent);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 999;
+        font-size: 0.95rem;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// Fetch trending songs from YouTube
+async function fetchTrendingMusic() {
+    try {
+        const queries = ['trending music 2024', 'best songs', 'new releases', 'popular music'];
+        const query = queries[Math.floor(Math.random() * queries.length)];
+        
+        const cachedData = localStorage.getItem(`yt_trending_${query}`);
+        if (cachedData) {
+            trendingTracks = JSON.parse(cachedData);
+            displayTrendingMusic();
+            return;
+        }
+
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&key=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        trendingTracks = data.items.map(item => ({
+            id: item.id.videoId,
+            title: item.snippet.title,
+            channel: item.snippet.channelTitle,
+            thumbnail: item.snippet.thumbnails.medium.url
+        }));
+
+        localStorage.setItem(`yt_trending_${query}`, JSON.stringify(trendingTracks));
+        displayTrendingMusic();
+    } catch (error) {
+        console.error('Error fetching trending music:', error);
+    }
+}
+
+// Fetch new/popular albums
+async function fetchNewAlbums() {
+    try {
+        const queries = ['new albums', 'album releases', 'top albums'];
+        const query = queries[Math.floor(Math.random() * queries.length)];
+        
+        const cachedData = localStorage.getItem(`yt_albums_${query}`);
+        if (cachedData) {
+            displayNewAlbums(JSON.parse(cachedData));
+            return;
+        }
+
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=6&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&key=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        const albums = data.items.map(item => ({
+            id: item.id.videoId,
+            title: item.snippet.title,
+            channel: item.snippet.channelTitle,
+            thumbnail: item.snippet.thumbnails.medium.url
+        }));
+
+        localStorage.setItem(`yt_albums_${query}`, JSON.stringify(albums));
+        displayNewAlbums(albums);
+    } catch (error) {
+        console.error('Error fetching new albums:', error);
+    }
+}
+
+function displayNewAlbums(albums) {
+    const container = document.getElementById('new-albums');
+    container.innerHTML = '';
+    
+    albums.forEach(album => {
+        const card = document.createElement('div');
+        card.className = 'album-card';
+        card.innerHTML = `
+            <img src="${album.thumbnail}" class="album-card-image" alt="album">
+            <div class="album-card-info">
+                <p class="album-card-title">${album.title}</p>
+                <p class="album-card-artist">${album.channel}</p>
+            </div>
+        `;
+        card.addEventListener('click', () => playNewAlbumTrack(album));
+        container.appendChild(card);
+    });
+}
+
+function displayTrendingMusic() {
+    const container = document.getElementById('trending-songs');
+    container.innerHTML = '';
+    
+    trendingTracks.forEach(track => {
+        const row = document.createElement('div');
+        row.className = 'trending-song-row';
+        row.innerHTML = `
+            <img src="${track.thumbnail}" class="trending-song-thumb" alt="cover">
+            <div class="trending-song-info">
+                <div class="trending-song-title">${track.title}</div>
+                <div class="trending-song-artist">${track.channel}</div>
+            </div>
+            <div class="trending-song-actions">
+                <button class="trending-song-btn" onclick="playTrendingTrack('${track.id}', event)">▶</button>
+                <button class="trending-song-btn" onclick="addTrendingToPlaylist('${track.id}', event)">＋</button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function playNewAlbumTrack(album) {
+    const existingIndex = currentPlaylist.findIndex(item => item.id === album.id);
+    if (existingIndex !== -1) {
+        playTrack(existingIndex);
+    } else {
+        currentPlaylist.unshift(album);
+        playTrack(0);
+    }
+}
+
+function playTrendingTrack(trackId, event) {
+    if (event) event.stopPropagation();
+    const track = trendingTracks.find(t => t.id === trackId);
+    if (track) {
+        const existingIndex = currentPlaylist.findIndex(item => item.id === trackId);
+        if (existingIndex !== -1) {
+            playTrack(existingIndex);
+        } else {
+            currentPlaylist.unshift(track);
+            playTrack(0);
+        }
+    }
+}
+
+function addTrendingToPlaylist(trackId, event) {
+    if (event) event.stopPropagation();
+    const track = trendingTracks.find(t => t.id === trackId);
+    if (track) {
+        showPlaylistModal(track);
+    }
+}
 
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('yt-core-player', {
@@ -24,7 +324,11 @@ function onYouTubeIframeAPIReady() {
     initProgressBar();
     setupImmersiveModal();
     setupMobileNavigation();
+    setupPlaylistModal();
     setupAuthenticationDrawer();
+    updatePlaylistCount();
+    fetchNewAlbums();
+    fetchTrendingMusic();
 }
 
 function formatTime(seconds) {
@@ -86,36 +390,51 @@ function updateProgressBar() {
 
 setInterval(updateProgressBar, 250);
 
-// Core Navigation Routing Loop
+// Core Navigation Routing
+const navHome = document.getElementById('nav-home');
 const navSearch = document.getElementById('nav-search');
 const navPlaylist = document.getElementById('nav-playlist');
+const homeView = document.getElementById('home-view');
 const searchView = document.getElementById('search-view');
 const playlistView = document.getElementById('playlist-view');
 
-function triggerRouteSwitch(showSearch) {
-    if(showSearch) {
-        navSearch.classList.add('active');
-        navPlaylist.classList.remove('active');
+function triggerRouteSwitch(view) {
+    // Hide all views
+    homeView.classList.add('hidden');
+    searchView.classList.add('hidden');
+    playlistView.classList.add('hidden');
+    navHome.classList.remove('active');
+    navSearch.classList.remove('active');
+    navPlaylist.classList.remove('active');
+    
+    // Show selected view
+    if (view === 'home') {
+        homeView.classList.remove('hidden');
+        navHome.classList.add('active');
+    } else if (view === 'search') {
         searchView.classList.remove('hidden');
-        playlistView.classList.add('hidden');
-    } else {
-        navPlaylist.classList.add('active');
-        navSearch.classList.remove('active');
+        navSearch.classList.add('active');
+    } else if (view === 'playlist') {
         playlistView.classList.remove('hidden');
-        searchView.classList.add('hidden');
-        updatePlaylistUI();
+        navPlaylist.classList.add('active');
+        displayPlaylists();
     }
-    // Automatically retract side drawer on mobile navigation switches
+    
     const sidebar = document.getElementById('app-sidebar-drawer');
     const backdrop = document.getElementById('sidebar-backdrop');
     if (sidebar) sidebar.classList.remove('drawer-open');
     if (backdrop) backdrop.style.display = 'none';
 }
 
-navSearch.addEventListener('click', () => triggerRouteSwitch(true));
-navPlaylist.addEventListener('click', () => triggerRouteSwitch(false));
+navHome.addEventListener('click', () => triggerRouteSwitch('home'));
+navSearch.addEventListener('click', () => triggerRouteSwitch('search'));
+navPlaylist.addEventListener('click', () => triggerRouteSwitch('playlist'));
 
-// Mobile Drawer Interaction Layers
+// Home branding to home page
+document.getElementById('mobile-branding').addEventListener('click', () => triggerRouteSwitch('home'));
+document.getElementById('sidebar-branding').addEventListener('click', () => triggerRouteSwitch('home'));
+
+// Mobile Navigation
 function setupMobileNavigation() {
     const menuBtn = document.getElementById('mobile-menu-trigger');
     const closeBtn = document.getElementById('sidebar-close-trigger');
@@ -138,7 +457,42 @@ function setupMobileNavigation() {
     }
 }
 
-// Account Drawer Authentication Event mapping
+function setupPlaylistModal() {
+    const modal = document.getElementById('playlist-modal');
+    const closeBtn = document.getElementById('playlist-modal-close');
+    const backdrop = document.querySelector('.playlist-modal-backdrop');
+    const createBtn = document.getElementById('create-playlist-btn');
+    const input = document.getElementById('new-playlist-input');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePlaylistModal);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', closePlaylistModal);
+    }
+
+    if (createBtn) {
+        createBtn.addEventListener('click', () => {
+            const name = input.value.trim();
+            if (name) {
+                const playlist = createPlaylist(name);
+                if (pendingTrack) {
+                    addSongToPlaylist(playlist.id, pendingTrack);
+                    showNotification(`Created "${name}" and added song!`);
+                }
+                closePlaylistModal();
+            }
+        });
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createBtn.click();
+            }
+        });
+    }
+}
+
 function setupAuthenticationDrawer() {
     const openBtn = document.getElementById('mobile-profile-trigger');
     const closeBtn = document.getElementById('auth-close-trigger');
@@ -172,7 +526,7 @@ document.getElementById('search-btn').addEventListener('click', async () => {
 
     const cachedData = localStorage.getItem(`yt_search_${query}`);
     if (cachedData) {
-        displayResults(JSON.parse(cachedData));
+        displaySearchResults(JSON.parse(cachedData));
         resetSearchButton();
         return;
     }
@@ -191,11 +545,18 @@ document.getElementById('search-btn').addEventListener('click', async () => {
         }));
 
         localStorage.setItem(`yt_search_${query}`, JSON.stringify(tracks));
-        displayResults(tracks);
+        displaySearchResults(tracks);
     } catch (error) {
         console.error(error);
     } finally {
         resetSearchButton();
+    }
+});
+
+document.getElementById('search-input').addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('search-btn').click();
     }
 });
 
@@ -204,104 +565,75 @@ function resetSearchButton() {
     document.getElementById('search-btn').textContent = 'Search';
 }
 
-function displayResults(tracks) {
+function displaySearchResults(tracks) {
     const resultsList = document.getElementById('results-list');
     resultsList.innerHTML = '';
 
     tracks.forEach(track => {
-        const encTitle = btoa(encodeURIComponent(track.title));
-        const encThumb = btoa(encodeURIComponent(track.thumbnail));
-        const encChannel = btoa(encodeURIComponent(track.channel));
-
-        const card = document.createElement('div');
-        card.className = 'track-row';
-        card.innerHTML = `
-            <img src="${track.thumbnail}" alt="cover" class="track-thumb">
-            <div class="track-meta" onclick="playSearchTrack('${track.id}', '${encTitle}', '${encThumb}', '${encChannel}', event)">
-                <span class="title">${track.title}</span>
-                <span class="channel">${track.channel}</span>
+        const row = document.createElement('div');
+        row.className = 'search-result-row';
+        row.innerHTML = `
+            <img src="${track.thumbnail}" class="search-result-thumb" alt="cover">
+            <div class="search-result-info">
+                <div class="search-result-title">${track.title}</div>
+                <div class="search-result-artist">${track.channel}</div>
             </div>
-            <div class="row-actions-group">
-                <button class="action-btn" onclick="playSearchTrack('${track.id}', '${encTitle}', '${encThumb}', '${encChannel}', event)">▶ Play</button>
-                <button class="action-btn" onclick="addToPlaylist('${track.id}', '${encTitle}', '${encThumb}', '${encChannel}')">＋ Add</button>
+            <div class="search-result-actions">
+                <button class="search-result-btn" onclick="playSearchTrack('${track.id}', event)">▶</button>
+                <button class="search-result-btn" onclick="addSearchToPlaylist('${track.id}', event)">＋</button>
             </div>
         `;
-        resultsList.appendChild(card);
+        resultsList.appendChild(row);
     });
 }
 
-function addToPlaylist(id, encodedTitle, encodedThumb, encodedChannel) {
-    const title = decodeURIComponent(atob(encodedTitle));
-    const thumbnail = decodeURIComponent(atob(encodedThumb));
-    const channel = decodeURIComponent(atob(encodedChannel));
-    
-    if (currentPlaylist.some(item => item.id === id)) return;
-
-    currentPlaylist.push({ id, title, thumbnail, channel });
-    document.getElementById('playlist-count').textContent = currentPlaylist.length;
-    updatePlaylistUI();
-
-    if (currentPlaylist.length === 1) {
-        playTrack(0);
-    }
-}
-
-function playSearchTrack(id, encodedTitle, encodedThumb, encodedChannel, event) {
+function playSearchTrack(id, event) {
     if (event) event.stopPropagation();
-    const title = decodeURIComponent(atob(encodedTitle));
-    const thumbnail = decodeURIComponent(atob(encodedThumb));
-    const channel = decodeURIComponent(atob(encodedChannel));
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}&key=${API_KEY}`;
     
-    const existingIndex = currentPlaylist.findIndex(item => item.id === id);
-    
-    if (existingIndex !== -1) {
-        playTrack(existingIndex);
-    } else {
-        currentPlaylist.unshift({ id, title, thumbnail, channel });
-        document.getElementById('playlist-count').textContent = currentPlaylist.length;
-        playTrack(0);
-    }
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.items && data.items.length > 0) {
+                const item = data.items[0];
+                const track = {
+                    id: id,
+                    title: item.snippet.title,
+                    channel: item.snippet.channelTitle,
+                    thumbnail: item.snippet.thumbnails.medium.url
+                };
+                
+                const existingIndex = currentPlaylist.findIndex(item => item.id === id);
+                if (existingIndex !== -1) {
+                    playTrack(existingIndex);
+                } else {
+                    currentPlaylist.unshift(track);
+                    playTrack(0);
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching track details:', error));
 }
 
-function updatePlaylistUI() {
-    const playlistList = document.getElementById('playlist-list');
-    if(!playlistList) return;
-    playlistList.innerHTML = '';
-
-    if (currentPlaylist.length === 0) {
-        playlistList.innerHTML = `<p class="empty-state">Your playlist is empty.</p>`;
-        return;
-    }
-
-    currentPlaylist.forEach((track, index) => {
-        const card = document.createElement('div');
-        card.className = `track-row ${index === currentIndex ? 'playing-active' : ''}`;
-        card.innerHTML = `
-            <img src="${track.thumbnail}" alt="cover" class="track-thumb">
-            <div class="track-meta" onclick="playTrack(${index})">
-                <span class="title">${track.title}</span>
-                <span class="channel">${track.channel}</span>
-            </div>
-            <button class="action-btn delete" onclick="removeFromPlaylist(${index}, event)">✕ Remove</button>
-        `;
-        playlistList.appendChild(card);
-    });
-}
-
-function removeFromPlaylist(index, event) {
-    event.stopPropagation();
-    currentPlaylist.splice(index, 1);
-    document.getElementById('playlist-count').textContent = currentPlaylist.length;
+function addSearchToPlaylist(id, event) {
+    if (event) event.stopPropagation();
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}&key=${API_KEY}`;
     
-    if (index === currentIndex && currentPlaylist.length > 0) {
-        playTrack(Math.max(0, index - 1));
-    } else if (currentPlaylist.length === 0) {
-        if(player && typeof player.stopVideo === 'function') player.stopVideo();
-        document.getElementById('current-title').textContent = "No Track Selected";
-        document.getElementById('mini-cover').style.display = 'none';
-        document.getElementById('play-btn').textContent = '▶';
-    }
-    updatePlaylistUI();
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.items && data.items.length > 0) {
+                const item = data.items[0];
+                const track = {
+                    id: id,
+                    title: item.snippet.title,
+                    channel: item.snippet.channelTitle,
+                    thumbnail: item.snippet.thumbnails.medium.url
+                };
+                showPlaylistModal(track);
+            }
+        })
+        .catch(error => console.error('Error fetching track details:', error));
 }
 
 function playTrack(index) {
@@ -331,7 +663,6 @@ function playTrack(index) {
         player.loadVideoById(track.id);
         togglePlayButtonLook(true);
     }
-    updatePlaylistUI();
 }
 
 function togglePlayButtonLook(isPlaying) {
@@ -373,7 +704,7 @@ function onPlayerError(e) {
     document.getElementById('current-status').textContent = 'Error loading track';
 }
 
-// Modal Toggle Management for Fullscreen Overlay Views
+// Modal Toggle Management
 function setupImmersiveModal() {
     const modal = document.getElementById('immersive-modal');
     const desktopOpenBtn = document.getElementById('toggle-immersive-view');
@@ -387,10 +718,8 @@ function setupImmersiveModal() {
 
     if(desktopOpenBtn) desktopOpenBtn.addEventListener('click', showModal);
     
-    // Allows mobile devices to expand full-canvas UI by tapping anywhere on now-playing-info block
     if(mobileOpenTriggerZone) {
         mobileOpenTriggerZone.addEventListener('click', (e) => {
-            // Prevent expanding if clicking on a track that isn't selected or loaded yet
             if(window.innerWidth <= 768 && currentPlaylist.length > 0) {
                 showModal();
             }
