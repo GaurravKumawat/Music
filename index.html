@@ -11,7 +11,7 @@
 
     <header class="mobile-top-navbar">
         <button class="mobile-icon-btn" id="mobile-menu-trigger" aria-label="Open Sidebar Menu">☰</button>
-        <div class="mobile-app-branding">
+        <div class="mobile-app-branding" id="mobile-branding">
             <svg viewBox="0 0 24 24" class="apple-logo-svg"><path fill="currentColor" d="M18.71,19.5C17.88,20.74,17,21.95,15.66,21.97C14.32,22,13.89,21.18,12.37,21.18C10.84,21.18,10.37,21.95,9.1,22C7.79,22.05,6.8,20.68,5.96,19.47C4.25,17,2.94,12.45,4.7,9.39C5.57,7.87,7.13,6.91,8.82,6.88C10.1,6.86,11.32,7.75,12.11,7.75C12.89,7.75,14.37,6.68,15.92,6.84C16.57,6.87,18.39,7.1,19.56,8.82C19.47,8.88,17.39,10.1,17.41,12.63C17.44,15.65,20.06,16.66,20.1,16.67C20.08,16.74,19.67,18.11,18.71,19.5M15.97,4.17C16.63,3.37,17.07,2.28,16.95,1C16,1.04,14.9,1.6,14.24,2.38C13.68,3.04,13.19,4.14,13.34,5.39C14.39,5.47,15.4,4.88,15.97,4.17Z"/></svg>
             <span>Music</span>
         </div>
@@ -21,37 +21,60 @@
     <div class="app-layout">
         <aside class="sidebar" id="app-sidebar-drawer">
             <div class="sidebar-header-wrap">
-                <div class="logo">
+                <div class="logo" id="sidebar-branding">
                     <svg viewBox="0 0 24 24" class="apple-icon"><path fill="currentColor" d="M18.71,19.5C17.88,20.74,17,21.95,15.66,21.97C14.32,22,13.89,21.18,12.37,21.18C10.84,21.18,10.37,21.95,9.1,22C7.79,22.05,6.8,20.68,5.96,19.47C4.25,17,2.94,12.45,4.7,9.39C5.57,7.87,7.13,6.91,8.82,6.88C10.1,6.86,11.32,7.75,12.11,7.75C12.89,7.75,14.37,6.68,15.92,6.84C16.57,6.87,18.39,7.1,19.56,8.82C19.47,8.88,17.39,10.1,17.41,12.63C17.44,15.65,20.06,16.66,20.1,16.67C20.08,16.74,19.67,18.11,18.71,19.5M15.97,4.17C16.63,3.37,17.07,2.28,16.95,1C16,1.04,14.9,1.6,14.24,2.38C13.68,3.04,13.19,4.14,13.34,5.39C14.39,5.47,15.4,4.88,15.97,4.17Z"/></svg>
                     <span>Music</span>
                 </div>
                 <button class="close-sidebar-btn" id="sidebar-close-trigger">✕</button>
             </div>
             <nav>
-                <div class="nav-item active" id="nav-search">🔍 Listen Now</div>
-                <div class="nav-item" id="nav-playlist">🎵 Playlists (<span id="playlist-count">0</span>)</div>
+                <div class="nav-item active" id="nav-home">🏠 Home</div>
+                <div class="nav-item" id="nav-search">🔍 Search</div>
+                <div class="nav-item" id="nav-playlist">🎵 Library (<span id="playlist-count">0</span>)</div>
             </nav>
         </aside>
 
         <main class="main-content">
-            <header class="header-bar">
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="Artists, Songs, Lyrics...">
-                    <button id="search-btn">Search</button>
-                </div>
-            </header>
+            <!-- HOME VIEW (DEFAULT) -->
+            <section id="home-view" class="view-panel">
+                <div class="home-container">
+                    <div class="promo-banner">
+                        <h2>Get over 100 million songs free for 1 month.</h2>
+                    </div>
 
-            <section id="search-view" class="view-panel">
-                <h1 class="view-title">Listen Now</h1>
-                <div class="track-list" id="results-list">
-                    <p class="empty-state">Search above to find music streams.</p>
+                    <h1 class="section-title">New</h1>
+                    <div class="new-albums-carousel" id="new-albums">
+                        <!-- Dynamically populated -->
+                    </div>
+
+                    <h1 class="section-title">Best New Songs</h1>
+                    <div class="trending-songs-list" id="trending-songs">
+                        <!-- Dynamically populated -->
+                    </div>
                 </div>
             </section>
 
+            <!-- SEARCH VIEW (FULL PAGE) -->
+            <section id="search-view" class="view-panel hidden">
+                <div class="search-container">
+                    <div class="search-header">
+                        <h1 class="view-title">Search</h1>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Artists, Songs, Lyrics...">
+                        <button id="search-btn">Search</button>
+                    </div>
+                    <div class="search-results-list" id="results-list">
+                        <p class="empty-state">Search above to find music streams.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LIBRARY/PLAYLIST VIEW (FULL PAGE) -->
             <section id="playlist-view" class="view-panel hidden">
                 <h1 class="view-title">Library</h1>
-                <div class="track-list" id="playlist-list">
-                    <p class="empty-state">Your playlist is empty.</p>
+                <div class="playlist-list" id="playlist-list">
+                    <p class="empty-state">No playlists yet. Create one from search!</p>
                 </div>
             </section>
         </main>
@@ -132,6 +155,38 @@
         </div>
 
         <div class="sidebar-touch-backdrop" id="sidebar-backdrop"></div>
+
+        <!-- Playlist Selection Modal -->
+        <div class="playlist-modal hidden" id="playlist-modal">
+            <div class="playlist-modal-backdrop"></div>
+            <div class="playlist-modal-content">
+                <div class="playlist-modal-header">
+                    <h2>Add to Playlist</h2>
+                    <button class="playlist-modal-close" id="playlist-modal-close">✕</button>
+                </div>
+                <div class="playlist-modal-body">
+                    <div class="playlist-list-container" id="existing-playlists">
+                    </div>
+                    <div class="playlist-create-section">
+                        <input type="text" id="new-playlist-input" placeholder="Create new playlist..." class="new-playlist-input">
+                        <button id="create-playlist-btn" class="create-playlist-btn">Create & Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Drawer -->
+        <div class="auth-drawer-overlay hidden" id="auth-drawer">
+            <div class="auth-drawer-card">
+                <div class="drawer-drag-line"></div>
+                <h2>Account</h2>
+                <p>Sign in to your Apple Music account</p>
+                <button class="google-auth-trigger-btn" id="google-login-action">
+                    <span>Sign in with Google</span>
+                </button>
+                <button class="cancel-auth-btn" id="auth-close-trigger">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
